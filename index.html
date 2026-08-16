@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>《記承天寺夜遊》微光解謎</title>
+    <script src="assets/vendor/tailwindcss-3.4.17.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Serif TC', serif;
+            background-color: #0b132b;
+            color: #e2e8f0;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        .ink-bg {
+            background-color: #0b132b;
+            background-image: linear-gradient(to bottom, rgba(11, 19, 43, 0.35), rgba(11, 19, 43, 0.35)), url('承天寺.jpg');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+        }
+
+        .scene-bg {
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .scene-overlay {
+            background: linear-gradient(to bottom, rgba(11, 19, 43, 0.22), rgba(11, 19, 43, 0.58));
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        #screen-intro > :not(.scene-bg):not(.scene-overlay) {
+            position: relative;
+            z-index: 10;
+        }
+        
+        .moonlight-glow {
+            text-shadow: 0 0 10px rgba(162, 210, 255, 0.7), 0 0 20px rgba(162, 210, 255, 0.5);
+        }
+
+        .classical-border {
+            border: 2px solid #5bc0be;
+            box-shadow: 0 0 15px rgba(91, 192, 190, 0.3) inset, 0 0 15px rgba(91, 192, 190, 0.3);
+            background: rgba(11, 19, 43, 0.85);
+        }
+
+        .screen {
+            display: none;
+            opacity: 0;
+            transition: opacity 0.8s ease-in-out;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        .screen.active {
+            display: flex;
+            opacity: 1;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            50% { transform: translateX(5px); }
+            75% { transform: translateX(-5px); }
+        }
+        .shake-anim { animation: shake 0.4s ease-in-out; }
+
+        @keyframes flicker {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+            75% { opacity: 0.8; }
+        }
+        .candle-flicker { animation: flicker 2s infinite ease-in-out; }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        .floating { animation: float 3s infinite ease-in-out; }
+
+        @keyframes sway {
+            0%, 100% { transform: rotate(0deg); }
+            50% { transform: rotate(2deg); }
+        }
+        .shadow-sway {
+            animation: sway 4s infinite ease-in-out;
+            transform-origin: bottom center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 100%;
+            background: transparent;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 24px;
+            width: 24px;
+            border-radius: 50%;
+            background: #e2e8f0;
+            box-shadow: 0 0 10px #e2e8f0, 0 0 20px #e2e8f0;
+            cursor: pointer;
+            margin-top: -10px;
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 4px;
+            cursor: pointer;
+            background: #1c2541;
+            border-radius: 2px;
+            border: 1px solid #5bc0be;
+        }
+
+        .dialogue-box {
+            background: linear-gradient(to bottom, rgba(28,37,65,0.9), rgba(11,19,43,0.95));
+            border-top: 2px solid #5bc0be;
+        }
+
+        .icon-card {
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        .icon-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(91, 192, 190, 0.4);
+            border-color: #a2d2ff;
+        }
+    </style>
+</head>
+<body class="ink-bg flex flex-col h-screen w-screen">
+
+    <header class="w-full p-4 flex justify-between items-center z-50 absolute top-0 left-0 border-b border-gray-700 bg-black/40 backdrop-blur-md">
+        <div>
+            <h1 class="text-xl md:text-2xl font-bold moonlight-glow tracking-widest text-teal-100">《記承天寺夜遊》微光解謎</h1>
+            <p class="text-xs text-teal-300 mt-1" id="level-indicator">準備開始</p>
+        </div>
+        
+        <div id="mindset-container" class="hidden flex-col items-end">
+            <span class="text-sm mb-1 text-teal-200">心境指數 (閒人境界)</span>
+            <div class="w-32 md:w-48 h-3 bg-gray-800 rounded-full overflow-hidden border border-gray-600">
+                <div id="mindset-bar" class="h-full bg-gradient-to-r from-teal-600 to-teal-300 transition-all duration-700 ease-out" style="width: 50%;"></div>
+            </div>
+        </div>
+    </header>
+
+    <main class="relative w-full h-full flex-1 mt-16 max-w-5xl mx-auto">
+        
+        <div id="screen-intro" class="screen active flex-col justify-center items-center text-center p-6">
+            <div class="absolute inset-0 scene-bg" style="background-image:url('assets/images/stage1-moonlit-window.png');"></div>
+            <div class="absolute inset-0 scene-overlay"></div>
+            <div class="mb-8 floating opacity-80">
+                <!-- 古典月亮與雲朵圖示 -->
+                <svg width="120" height="120" viewBox="0 0 100 100">
+                    <circle cx="50" cy="50" r="30" fill="#e2e8f0" filter="drop-shadow(0 0 10px #a2d2ff)"/>
+                    <path d="M20 60 Q 40 40 60 60 T 100 60 L 100 80 L 20 80 Z" fill="#1c2541" opacity="0.8"/>
+                    <path d="M0 70 Q 30 50 50 70 T 90 70 L 90 90 L 0 90 Z" fill="#0b132b"/>
+                </svg>
+            </div>
+            <h1 class="text-5xl md:text-6xl font-bold mb-6 moonlight-glow tracking-widest leading-tight">記承天寺夜遊</h1>
+            <p class="text-lg text-gray-300 mb-10 max-w-2xl leading-relaxed">
+                何夜無月？何處無竹柏？但少閒人如吾兩人耳。<br>
+                五個關卡，帶你走入蘇軾的微光心境。
+            </p>
+            <button onclick="startGame()" class="classical-border px-10 py-4 text-xl hover:bg-teal-900 transition-colors duration-300 rounded-sm tracking-widest">
+                開始遊歷
+            </button>
+        </div>
+
+        <div id="screen-stage1" class="screen flex-col items-center justify-center p-4">
+            <div class="absolute inset-0 scene-bg" style="background-image:url('assets/images/stage1-moonlit-window.png');"></div>
+            <div class="absolute inset-0 scene-overlay"></div>
+            <div class="z-10 text-center mb-6">
+                <h2 class="text-2xl text-teal-300 mb-2">第一關：月色入戶</h2>
+                <p class="text-gray-400">點擊開啟窗戶讓月光照入，並重組夜遊的動機。</p>
+            </div>
+
+            <div class="z-10 w-full max-w-3xl classical-border p-8 rounded flex flex-col items-center gap-6 relative bg-black/40">
+                
+                <!-- 窗戶圖示互動區 -->
+                <div id="window-icon" class="cursor-pointer transition-all duration-500 hover:scale-105" onclick="openWindow()">
+                    <svg width="100" height="100" viewBox="0 0 100 100">
+                        <rect x="10" y="10" width="80" height="80" fill="#111" stroke="#5bc0be" stroke-width="4"/>
+                        <line x1="50" y1="10" x2="50" y2="90" stroke="#5bc0be" stroke-width="4"/>
+                        <line x1="10" y1="50" x2="90" y2="50" stroke="#5bc0be" stroke-width="4"/>
+                        <!-- 月光(預設隱藏) -->
+                        <circle id="window-moon" cx="30" cy="30" r="12" fill="#e2e8f0" class="opacity-0 transition-opacity duration-1000"/>
+                        <path id="window-light" d="M10 90 L30 50 L90 50 L90 90 Z" fill="rgba(162, 210, 255, 0)" class="transition-all duration-1000"/>
+                    </svg>
+                    <p class="text-center text-xs text-teal-500 mt-2">點擊推窗</p>
+                </div>
+
+                <!-- 隱藏的字卡區 (開窗後顯示) -->
+                <div id="stage1-puzzle" class="hidden w-full flex-col items-center gap-4">
+                    <div id="sentence-display" class="min-h-[60px] w-full border-b-2 border-teal-700 flex flex-wrap justify-center items-center gap-2 p-2 text-xl text-teal-100"></div>
+                    <div id="word-cards" class="flex flex-wrap justify-center gap-3 mt-2"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="screen-stage2" class="screen flex-col items-center justify-center p-4">
+            <div class="absolute inset-0 scene-bg" style="background-image:url('assets/images/stage2-temple-gate.png');"></div>
+            <div class="absolute inset-0 scene-overlay"></div>
+            <div class="z-10 text-center mb-8">
+                <h2 class="text-2xl text-teal-300 mb-2">第二關：夜訪承天</h2>
+                <p class="text-gray-400">「念無與為樂者...」夜深了，該往何處尋找知音？</p>
+            </div>
+
+            <div class="flex flex-col md:flex-row gap-6 z-10 w-full max-w-4xl justify-center">
+                <!-- 選項 A -->
+                <div class="icon-card classical-border flex-1 p-6 flex flex-col items-center gap-4 bg-black/60" onclick="choosePath('market')">
+                    <svg width="80" height="80" viewBox="0 0 100 100">
+                        <rect x="20" y="40" width="60" height="40" fill="#2d3748" stroke="#a0aec0" stroke-width="2"/>
+                        <circle cx="35" cy="30" r="8" fill="#f6e05e" class="candle-flicker"/>
+                        <circle cx="65" cy="30" r="8" fill="#f6e05e" class="candle-flicker"/>
+                    </svg>
+                    <h3 class="text-lg text-teal-100">喧鬧東市</h3>
+                    <p class="text-xs text-gray-400 text-center">燈火通明，人聲鼎沸之處</p>
+                </div>
+                <!-- 選項 B -->
+                <div class="icon-card classical-border flex-1 p-6 flex flex-col items-center gap-4 bg-black/60" onclick="choosePath('temple')">
+                    <svg width="80" height="80" viewBox="0 0 100 100">
+                        <path d="M50 10 L80 30 L80 90 L20 90 L20 30 Z" fill="#1a202c" stroke="#5bc0be" stroke-width="2"/>
+                        <path d="M20 30 L50 10 L80 30" fill="none" stroke="#5bc0be" stroke-width="4"/>
+                        <path d="M30 45 L70 45 L70 55 L30 55 Z" fill="#2d3748"/>
+                        <path d="M40 90 L40 65 L60 65 L60 90" fill="none" stroke="#5bc0be" stroke-width="2"/>
+                    </svg>
+                    <h3 class="text-lg text-teal-100">承天古寺</h3>
+                    <p class="text-xs text-gray-400 text-center">尋張懷民，佛門清淨之地</p>
+                </div>
+                <!-- 選項 C -->
+                <div class="icon-card classical-border flex-1 p-6 flex flex-col items-center gap-4 bg-black/60" onclick="choosePath('forest')">
+                    <svg width="80" height="80" viewBox="0 0 100 100">
+                        <path d="M50 20 L70 60 L30 60 Z" fill="#276749" opacity="0.7"/>
+                        <path d="M30 30 L50 70 L10 70 Z" fill="#22543d" opacity="0.9"/>
+                        <path d="M70 40 L90 80 L50 80 Z" fill="#22543d" opacity="0.6"/>
+                    </svg>
+                    <h3 class="text-lg text-teal-100">荒野密林</h3>
+                    <p class="text-xs text-gray-400 text-center">漆黑一片，無人煙之處</p>
+                </div>
+            </div>
+        </div>
+
+        <div id="screen-stage3" class="screen flex-col items-center justify-center p-4">
+            <div class="absolute inset-0 scene-bg" style="background-image:url('assets/images/stage3-door-courtyard.png');"></div>
+            <div class="absolute inset-0 scene-overlay"></div>
+            <div class="z-10 text-center mb-10">
+                <h2 class="text-2xl text-teal-300 mb-2">第三關：叩門尋友</h2>
+                <p class="text-gray-400">來到承天寺。「懷民亦未寢」，請觀察並敲響正確的房門。</p>
+            </div>
+
+            <div class="flex gap-8 z-10">
+                <!-- 門 1 -->
+                <div class="cursor-pointer group" onclick="knockDoor(false)">
+                    <svg width="100" height="140" viewBox="0 0 100 140" class="transition-transform group-hover:scale-105">
+                        <rect x="10" y="10" width="80" height="130" fill="#111" stroke="#4a5568" stroke-width="3"/>
+                        <rect x="20" y="20" width="25" height="40" fill="#1a202c" stroke="#2d3748"/>
+                        <rect x="55" y="20" width="25" height="40" fill="#1a202c" stroke="#2d3748"/>
+                        <circle cx="80" cy="80" r="3" fill="#4a5568"/>
+                    </svg>
+                </div>
+                <!-- 門 2 (正確，有微光) -->
+                <div class="cursor-pointer group" onclick="knockDoor(true)">
+                    <svg width="100" height="140" viewBox="0 0 100 140" class="transition-transform group-hover:scale-105">
+                        <rect x="10" y="10" width="80" height="130" fill="#111" stroke="#5bc0be" stroke-width="3"/>
+                        <!-- 窗戶透光 -->
+                        <rect x="20" y="20" width="25" height="40" fill="#f6e05e" opacity="0.3" class="candle-flicker"/>
+                        <rect x="55" y="20" width="25" height="40" fill="#f6e05e" opacity="0.3" class="candle-flicker"/>
+                        <line x1="45" y1="20" x2="45" y2="60" stroke="#111" stroke-width="2"/>
+                        <line x1="20" y1="40" x2="80" y2="40" stroke="#111" stroke-width="2"/>
+                        <circle cx="80" cy="80" r="3" fill="#5bc0be"/>
+                    </svg>
+                </div>
+                <!-- 門 3 -->
+                <div class="cursor-pointer group" onclick="knockDoor(false)">
+                    <svg width="100" height="140" viewBox="0 0 100 140" class="transition-transform group-hover:scale-105">
+                        <rect x="10" y="10" width="80" height="130" fill="#111" stroke="#4a5568" stroke-width="3"/>
+                        <rect x="20" y="20" width="25" height="40" fill="#1a202c" stroke="#2d3748"/>
+                        <rect x="55" y="20" width="25" height="40" fill="#1a202c" stroke="#2d3748"/>
+                        <circle cx="80" cy="80" r="3" fill="#4a5568"/>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <div id="screen-stage4" class="screen flex-col items-center justify-end pb-12 p-4 relative">
+            <div class="absolute inset-0 scene-bg" style="background-image:url('assets/images/stage4-moonlit-courtyard.png');"></div>
+            <div id="courtyard-darkness" class="absolute inset-0 bg-black z-10 transition-opacity duration-200"></div>
+            <div class="absolute inset-0 bg-gradient-to-t from-teal-900/40 to-transparent"></div>
+
+            <div class="z-20 text-center mb-8 w-full max-w-2xl pointer-events-none">
+                <h2 class="text-2xl text-teal-300 mb-2 drop-shadow-md">第四關：積水空明</h2>
+                <p id="stage4-hint" class="text-gray-300 drop-shadow-md">滑動月光，尋找「水中藻荇」...</p>
+            </div>
+
+            <!-- 竹柏影 SVG -->
+            <div id="bamboo-shadow" class="z-20 absolute bottom-32 left-1/2 transform -translate-x-1/2 opacity-0 transition-opacity duration-700 shadow-sway" onclick="clickShadow()">
+                <svg width="250" height="180" viewBox="0 0 200 150" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M100 150 C 90 120, 110 80, 80 50 C 70 40, 60 50, 75 65 C 90 80, 100 100, 100 150 Z" fill="#112233" opacity="0.8"/>
+                    <path d="M100 150 C 110 110, 80 70, 120 30 C 130 20, 140 35, 125 50 C 110 65, 105 100, 100 150 Z" fill="#152b40" opacity="0.8"/>
+                    <path d="M100 150 C 100 100, 140 90, 160 60 C 170 50, 155 40, 145 60 C 135 80, 105 120, 100 150 Z" fill="#0c1824" opacity="0.9"/>
+                    <line x1="20" y1="130" x2="180" y2="130" stroke="#5bc0be" stroke-width="1" stroke-dasharray="10 5" opacity="0.4"/>
+                    <line x1="40" y1="140" x2="160" y2="140" stroke="#5bc0be" stroke-width="1" stroke-dasharray="5 5" opacity="0.5"/>
+                </svg>
+            </div>
+
+            <div class="z-30 w-full max-w-md bg-gray-900/80 p-6 rounded-lg border border-teal-800 backdrop-blur-sm shadow-2xl relative">
+                <svg class="absolute top-4 left-4" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#a0aec0" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+                <label for="moon-slider" class="block text-center text-teal-100 mb-4 tracking-widest ml-4">撥開雲霧，調節月光</label>
+                <input type="range" id="moon-slider" min="0" max="100" value="0" oninput="adjustMoonlight(this.value)">
+            </div>
+        </div>
+
+        <div id="screen-stage5" class="screen flex-col justify-end p-0 relative">
+            <div class="absolute inset-0 scene-bg" style="background-image:url('assets/images/stage5-ending-moonview.png');"></div>
+            <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-teal-900/30 via-[#0b132b] to-[#0b132b]"></div>
+            
+            <div class="absolute bottom-48 left-1/2 transform -translate-x-1/2 flex gap-16 opacity-90 z-10">
+                <!-- 人物剪影 (蘇軾) -->
+                <div class="text-center">
+                    <svg width="60" height="120" viewBox="0 0 60 120">
+                        <circle cx="30" cy="20" r="15" fill="#2d3748"/>
+                        <path d="M10 50 Q30 30 50 50 L55 120 L5 120 Z" fill="#1a202c"/>
+                        <!-- 書卷 -->
+                        <rect x="35" y="60" width="10" height="20" fill="#718096" transform="rotate(15 35 60)"/>
+                    </svg>
+                    <span class="text-teal-200 text-sm mt-2 block tracking-widest">蘇軾</span>
+                </div>
+                <!-- 人物剪影 (張懷民) -->
+                <div class="text-center mt-4">
+                    <svg width="60" height="110" viewBox="0 0 60 110">
+                        <circle cx="30" cy="20" r="14" fill="#2d3748"/>
+                        <path d="M15 45 Q30 30 45 45 L50 110 L10 110 Z" fill="#1a202c"/>
+                    </svg>
+                    <span class="text-teal-200 text-sm mt-2 block tracking-widest">張懷民</span>
+                </div>
+            </div>
+
+            <div class="dialogue-box z-20 w-full h-64 p-6 md:p-8 flex flex-col justify-between">
+                <div>
+                    <h3 id="speaker-name" class="text-xl text-teal-300 font-bold mb-2 tracking-widest"></h3>
+                    <p id="dialogue-text" class="text-lg text-gray-200 leading-relaxed min-h-[4rem]"></p>
+                </div>
+                <div id="dialogue-choices" class="flex flex-col md:flex-row gap-4 mt-4"></div>
+            </div>
+        </div>
+
+        <div id="screen-ending" class="screen flex-col justify-center items-center p-6 text-center">
+            <div class="mb-6">
+                <!-- 蓮花圖示代表昇華 -->
+                <svg width="80" height="80" viewBox="0 0 100 100" class="floating">
+                    <path d="M50 20 Q60 50 80 50 Q60 60 50 90 Q40 60 20 50 Q40 50 50 20 Z" fill="#68d391" opacity="0.8"/>
+                    <path d="M50 30 Q55 50 70 50 Q55 55 50 80 Q45 55 30 50 Q45 50 50 30 Z" fill="#c6f6d5"/>
+                </svg>
+            </div>
+            <div id="ending-title" class="text-4xl md:text-5xl font-bold mb-6 moonlight-glow text-teal-200">結局標題</div>
+            <div id="ending-desc" class="text-lg text-gray-300 mb-8 max-w-2xl leading-relaxed">結局描述...</div>
+            <div class="classical-border p-6 max-w-3xl bg-black/50 mb-8">
+                <p class="text-teal-50 text-lg leading-loose text-justify md:text-center">
+                    元豐六年十月十二日夜，解衣欲睡，月色入戶，欣然起行。<br>
+                    念無與為樂者，遂至承天寺尋張懷民。<br>
+                    懷民亦未寢，相與步於中庭。<br>
+                    庭下如積水空明，水中藻荇交橫，蓋竹柏影也。<br>
+                    何夜無月？何處無竹柏？但少閒人如吾兩人耳。
+                </p>
+            </div>
+            <button onclick="location.reload()" class="classical-border px-8 py-3 text-lg hover:bg-teal-900 transition-colors">
+                再次遊歷
+            </button>
+        </div>
+
+    </main>
+
+    <div id="modal-overlay" class="hidden fixed inset-0 bg-black/80 z-[100] flex items-center justify-center backdrop-blur-sm transition-opacity opacity-0">
+        <div id="modal-content" class="classical-border w-[90%] max-w-md p-8 text-center relative transform scale-95 transition-transform duration-300">
+            <h3 id="modal-title" class="text-2xl text-teal-300 mb-4 font-bold tracking-widest">標題</h3>
+            <p id="modal-text" class="text-gray-200 mb-8 text-lg leading-relaxed">內文</p>
+            <div id="modal-actions" class="flex justify-center gap-4"></div>
+        </div>
+    </div>
+
+    <script>
+        // --- 狀態管理 ---
+        let mindsetValue = 50;
+        let currentScreen = 'intro';
+        
+        // --- 通用功能 ---
+        function switchScreen(screenId, levelText = "") {
+            document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
+            document.getElementById(`screen-${screenId}`).classList.add('active');
+            currentScreen = screenId;
+
+            const mindsetHUD = document.getElementById('mindset-container');
+            const indicator = document.getElementById('level-indicator');
+            
+            if(screenId === 'intro' || screenId === 'ending') {
+                mindsetHUD.classList.add('hidden');
+                mindsetHUD.classList.remove('flex');
+                indicator.innerText = screenId === 'intro' ? "準備開始" : "遊歷結束";
+            } else {
+                mindsetHUD.classList.remove('hidden');
+                mindsetHUD.classList.add('flex');
+                indicator.innerText = levelText;
+            }
+        }
+
+        function updateMindset(change) {
+            mindsetValue += change;
+            if(mindsetValue > 100) mindsetValue = 100;
+            if(mindsetValue < 0) mindsetValue = 0;
+            
+            const bar = document.getElementById('mindset-bar');
+            bar.style.width = `${mindsetValue}%`;
+
+            if (mindsetValue >= 80) {
+                bar.className = 'h-full bg-gradient-to-r from-teal-500 to-green-400 transition-all duration-700 ease-out';
+            } else if (mindsetValue <= 30) {
+                bar.className = 'h-full bg-gradient-to-r from-gray-600 to-gray-400 transition-all duration-700 ease-out';
+            } else {
+                bar.className = 'h-full bg-gradient-to-r from-teal-600 to-teal-300 transition-all duration-700 ease-out';
+            }
+        }
+
+        function showModal(title, text, buttonsHTML) {
+            const overlay = document.getElementById('modal-overlay');
+            const content = document.getElementById('modal-content');
+            document.getElementById('modal-title').innerText = title;
+            document.getElementById('modal-text').innerHTML = text;
+            document.getElementById('modal-actions').innerHTML = buttonsHTML;
+            overlay.classList.remove('hidden');
+            void overlay.offsetWidth; 
+            overlay.classList.remove('opacity-0');
+            content.classList.remove('scale-95');
+            content.classList.add('scale-100');
+        }
+
+        function closeModal() {
+            const overlay = document.getElementById('modal-overlay');
+            const content = document.getElementById('modal-content');
+            overlay.classList.add('opacity-0');
+            content.classList.remove('scale-100');
+            content.classList.add('scale-95');
+            setTimeout(() => overlay.classList.add('hidden'), 300);
+        }
+
+        function startGame() {
+            updateMindset(0);
+            initStage1();
+        }
+
+        const expectedWords = ["解衣欲睡", "月色入戶", "欣然起行"];
+        let currentWordIndex = 0;
+
+        function initStage1() {
+            switchScreen('stage1', "第一關：月色入戶");
+            currentWordIndex = 0;
+            document.getElementById('sentence-display').innerHTML = '';
+            document.getElementById('window-icon').style.pointerEvents = 'auto';
+            document.getElementById('window-moon').classList.add('opacity-0');
+            document.getElementById('window-light').setAttribute('fill', 'rgba(162, 210, 255, 0)');
+            document.getElementById('stage1-puzzle').classList.add('hidden');
+            document.getElementById('stage1-puzzle').classList.remove('flex');
+        }
+
+        function openWindow() {
+            // 視覺變化
+            document.getElementById('window-moon').classList.remove('opacity-0');
+            document.getElementById('window-moon').classList.add('opacity-100');
+            document.getElementById('window-light').setAttribute('fill', 'rgba(162, 210, 255, 0.2)');
+            document.getElementById('window-icon').style.pointerEvents = 'none';
+
+            // 顯示解謎
+            setTimeout(() => {
+                document.getElementById('stage1-puzzle').classList.remove('hidden');
+                document.getElementById('stage1-puzzle').classList.add('flex');
+                
+                const words = [...expectedWords].sort(() => Math.random() - 0.5);
+                const container = document.getElementById('word-cards');
+                container.innerHTML = '';
+                words.forEach(word => {
+                    const btn = document.createElement('button');
+                    btn.className = 'classical-border px-4 py-2 text-teal-100 hover:bg-teal-900 transition-colors';
+                    btn.innerText = word;
+                    btn.onclick = () => handleWordClick(word, btn);
+                    container.appendChild(btn);
+                });
+            }, 800);
+        }
+
+        function handleWordClick(word, btn) {
+            if (word === expectedWords[currentWordIndex]) {
+                btn.style.visibility = 'hidden';
+                const display = document.getElementById('sentence-display');
+                const span = document.createElement('span');
+                span.innerText = word + (currentWordIndex === expectedWords.length - 1 ? '。' : '，');
+                display.appendChild(span);
+                currentWordIndex++;
+                if (currentWordIndex === expectedWords.length) {
+                    updateMindset(10);
+                    setTimeout(() => {
+                        showModal('出發夜遊', '「念無與為樂者...」<br>夜色雖美，獨自一人卻顯孤單，決定出門尋找知音。', 
+                        `<button onclick="initStage2()" class="classical-border px-6 py-2 text-teal-100 hover:bg-teal-900">步出家門</button>`);
+                    }, 500);
+                }
+            } else {
+                btn.classList.add('shake-anim');
+                setTimeout(() => btn.classList.remove('shake-anim'), 400);
+            }
+        }
+
+        function initStage2() {
+            closeModal();
+            switchScreen('stage2', "第二關：夜訪承天");
+        }
+
+        function choosePath(path) {
+            if (path === 'temple') {
+                updateMindset(10);
+                showModal('尋得清幽', '來到承天古寺。<br>這裡避開了世俗的喧囂，正適合這清朗的月夜。', 
+                `<button onclick="initStage3()" class="classical-border px-6 py-2 text-teal-100 hover:bg-teal-900">進入寺廟</button>`);
+            } else {
+                updateMindset(-10);
+                showModal('格格不入', '此處氛圍與今夜的心境不合，請重新選擇。<br><span class="text-sm text-gray-400">(心境下降)</span>', 
+                `<button onclick="closeModal()" class="classical-border px-6 py-2 text-teal-100 hover:bg-gray-800">折返</button>`);
+            }
+        }
+
+        function initStage3() {
+            closeModal();
+            switchScreen('stage3', "第三關：叩門尋友");
+        }
+
+        function knockDoor(isCorrect) {
+            if (isCorrect) {
+                updateMindset(10);
+                showModal('知音相遇', '叩叩...<br>「懷民亦未寢，相與步於中庭。」<br>原來張懷民也無心睡眠，兩人便一同在庭院散步。', 
+                `<button onclick="initStage4()" class="classical-border px-6 py-2 text-teal-100 hover:bg-teal-900">步於中庭</button>`);
+            } else {
+                updateMindset(-5);
+                showModal('毫無回應', '房內一片漆黑，想必已經睡熟了。<br>再找找看哪間房還亮著微光吧。', 
+                `<button onclick="closeModal()" class="classical-border px-6 py-2 text-teal-100 hover:bg-gray-800">繼續尋找</button>`);
+            }
+        }
+
+        function initStage4() {
+            closeModal();
+            switchScreen('stage4', "第四關：積水空明");
+            document.getElementById('moon-slider').value = 0;
+            adjustMoonlight(0);
+        }
+
+        function adjustMoonlight(val) {
+            const darkness = document.getElementById('courtyard-darkness');
+            const shadow = document.getElementById('bamboo-shadow');
+            const hint = document.getElementById('stage4-hint');
+            
+            darkness.style.opacity = 1 - (val / 100);
+
+            if (val > 80) {
+                shadow.classList.remove('opacity-0');
+                shadow.classList.add('opacity-100');
+                hint.innerText = "點擊地上的異象...";
+            } else {
+                shadow.classList.add('opacity-0');
+                shadow.classList.remove('opacity-100');
+                hint.innerText = "撥開雲霧，調節月光...";
+            }
+        }
+
+        function clickShadow() {
+            const btns = `
+                <button onclick="wrongShadow()" class="classical-border px-4 py-2 text-teal-100 hover:bg-teal-900 mx-2">池塘的水草</button>
+                <button onclick="correctShadow()" class="classical-border px-4 py-2 text-teal-100 hover:bg-teal-900 mx-2">竹柏的倒影</button>
+            `;
+            showModal('意象辨識', '庭院地面如積水般澄澈空明，這「水中藻荇交橫」實則為？', btns);
+        }
+
+        function wrongShadow() {
+            updateMindset(-5);
+            closeModal();
+            setTimeout(() => {
+                showModal('仔細觀察', '地上並無積水，哪來的水草？再仔細看看周遭的植物。', 
+                `<button onclick="closeModal()" class="classical-border px-6 py-2 text-teal-100">再看一次</button>`);
+            }, 300);
+        }
+
+        function correctShadow() {
+            updateMindset(15);
+            closeModal();
+            setTimeout(() => {
+                showModal('視覺美感', '答對了！<br>「庭下如積水空明，水中藻荇交橫，蓋竹柏影也。」<br>作者以奇特的想像，將竹柏影比喻為水中交錯的水草。', 
+                `<button onclick="initStage5()" class="classical-border px-6 py-2 text-teal-100 hover:bg-teal-900">與懷民談心</button>`);
+            }, 300);
+        }
+
+        const dialogs = [
+            {
+                speaker: "張懷民",
+                text: "「夜深人靜，你我皆遭逢貶謫，子瞻兄心中可覺淒涼？」",
+                choices: [
+                    { text: "「唉，仕途不順，確實令人悲苦萬分。」", change: -15, next: 1 },
+                    { text: "「月色如此清美，何處無月？何處無竹柏？」", change: 20, next: 1 }
+                ]
+            },
+            {
+                speaker: "蘇軾",
+                text: "「我輩如今身為閒人，你看這『閒』字，該作何解？」",
+                choices: [
+                    { text: "「便是無所事事，虛度光陰的廢人罷了。」", change: -20, next: 'end' },
+                    { text: "「唯有心境清閒之人，方能共享此時美景。」", change: 30, next: 'end' }
+                ]
+            }
+        ];
+        let currentDialogStep = 0;
+
+        function initStage5() {
+            closeModal();
+            switchScreen('stage5', "第五關：閒人昇華");
+            currentDialogStep = 0;
+            renderDialog();
+        }
+
+        function renderDialog() {
+            const data = dialogs[currentDialogStep];
+            document.getElementById('speaker-name').innerText = data.speaker;
+            
+            const textContainer = document.getElementById('dialogue-text');
+            textContainer.innerHTML = '';
+            document.getElementById('dialogue-choices').innerHTML = ''; 
+            
+            let charIndex = 0;
+            const typeInterval = setInterval(() => {
+                textContainer.innerHTML += data.text.charAt(charIndex);
+                charIndex++;
+                if(charIndex >= data.text.length) {
+                    clearInterval(typeInterval);
+                    renderChoices(data.choices);
+                }
+            }, 50);
+        }
+
+        function renderChoices(choices) {
+            const container = document.getElementById('dialogue-choices');
+            container.innerHTML = '';
+            choices.forEach(choice => {
+                const btn = document.createElement('button');
+                btn.className = 'flex-1 classical-border px-4 py-3 text-teal-100 hover:bg-teal-900 transition-colors text-left';
+                btn.innerText = choice.text;
+                btn.onclick = () => {
+                    updateMindset(choice.change);
+                    if (choice.next === 'end') {
+                        setTimeout(showEnding, 800);
+                    } else {
+                        currentDialogStep = choice.next;
+                        renderDialog();
+                    }
+                };
+                container.appendChild(btn);
+            });
+        }
+
+        function showEnding() {
+            switchScreen('ending');
+            const titleEl = document.getElementById('ending-title');
+            const descEl = document.getElementById('ending-desc');
+
+            if (mindsetValue >= 80) {
+                titleEl.innerText = "大徹大悟・真正的閒人";
+                titleEl.className = "text-4xl md:text-5xl font-bold mb-6 moonlight-glow text-green-300";
+                descEl.innerHTML = "恭喜你！在仕途受挫時，你沒有陷入哀怨，反而以「閒人」自居，展現了超越世俗得失的曠達與豁達。";
+            } else {
+                titleEl.innerText = "尚帶惆悵・貶謫幽人";
+                titleEl.className = "text-4xl md:text-5xl font-bold mb-6 text-gray-400";
+                descEl.innerHTML = "你的心境似乎還受到世俗得失的牽絆。或許再多感受一下承天寺的月色，能讓你體悟到「閒人」的另一層豁達意義。";
+            }
+        }
+    </script>
+</body>
+</html>
